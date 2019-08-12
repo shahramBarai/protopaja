@@ -2,7 +2,20 @@
   THIS CODE DOES NOT USE CS5490 LIBRARY, INSTEAD IT USES HardwareSerial 2 library,
   it means that it will be useful only for ESP32 AND SIMILAR BOARDS.
 */
-const int resetpin = 27;
+
+#define REELAY_OFF 14
+#define REELAY_ON 12
+#define REELAY_LED 32
+
+#define RGB_R 26
+#define RGB_G 25
+#define RGB_B 33
+
+#define BUTTON 4
+
+#define RST_SC5490 27
+
+
 //**********-FOR BLYNK-********************
 #define BLYNK_PRINT Serial
 #include <WiFi.h>
@@ -23,12 +36,12 @@ void setup(){
   // set the data rate for the HardwareSerial 2 port
   Serial2.begin(600);
 
-  //Restarting? -ask Kalle.
-  pinMode(resetpin, OUTPUT);
+  //Restarting chip
+  pinMode(RST_SC5490, OUTPUT);
   delay(2000);
-  digitalWrite(resetpin, LOW);
+  digitalWrite(RST_SC5490, LOW);
   delay(2000);
-  digitalWrite(resetpin, HIGH);
+  digitalWrite(RST_SC5490, HIGH);
 
   //"wakeuping" the chip
   delay(2000);
@@ -47,30 +60,7 @@ void loop(){
   //**********-FOR BLYNK-********************
   Blynk.run();
   //**********-FOR BLYNK END-****************
-  int valV = readRmsV();
-  
-  int valI = readRmsI();
-  
-  float valPF = readPF();
-
-  float valP = calcP(valV, valI, valPF);
-  
-  //**********-FOR BLYNK-********************
-  pushValueV(valV); 
-  pushValueI(valI/1000);
-  pushValueP(valP);
-  //**********-FOR BLYNK END-****************
-
-  Serial.println("Rms Voltage:");
-  Serial.println(valV, DEC);
-  Serial.println("Rms Current:");
-  Serial.println(valI, DEC);
-  Serial.println("PF:");
-  
-  Serial.println("Power P = VIcos(u):");
-  Serial.println(valP, DEC);
-  
-  Serial.println(valPF, DEC);
+  readPushValues();
 }
 
 int readRmsV(){
@@ -157,6 +147,32 @@ void clearSerial2Buffer(){ //Clears Serial2 buffer every time before writing to 
     Serial2.read();
   }
 }
+
+void readPushValues(){
+  int valV = readRmsV();
+  
+  int valI = readRmsI();
+  
+  float valPF = readPF();
+
+  float valP = calcP(valV, valI, valPF);
+  
+  //**********-FOR BLYNK-********************
+  pushValueV(valV); 
+  pushValueI(valI/1000);
+  pushValueP(valP);
+  //**********-FOR BLYNK END-****************
+
+  Serial.println("Rms Voltage:");
+  Serial.println(valV, DEC);
+  Serial.println("Rms Current:");
+  Serial.println(valI, DEC);
+  Serial.println("PF:");
+  
+  Serial.println("Power P = VIcos(u):");
+  Serial.println(valP, DEC);
+  Serial.println(valPF, DEC);
+} 
 
 //**********-BLYNK FUNCTIONS->************
 void pushValueV(int val){
