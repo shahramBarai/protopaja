@@ -26,6 +26,11 @@ char ssid[] = "aalto open";
 char pass[] = "";
 //**********-FOR BLYNK END-****************
 
+unsigned long time_now = 0;
+int readPushDur = 3*60*60*1000; // 3 min
+const int readPushesQuantSet = 10;
+int readPushesQuant = 10;
+
 void setup(){
   // Open serial communications and wait for port to open:
   Serial.begin(115200);
@@ -60,15 +65,22 @@ void loop(){
   //**********-FOR BLYNK-********************
   Blynk.run();
   //**********-FOR BLYNK END-****************
-  readPushValues();
+  if((millis() > time_now + readPushDuration) || (0 > readPushesQuant)){ //every rad & push duration push the quantity of readPushesQuant
+    if (millis() > time_now + readPushDuration){
+      readPushesQuant = readPushesQuantSet;
+    }
+    time_now = millis();
+    readPushValues();
+    readPushesQuant--;
+    }
 }
 
 int readRmsV(){
   uint32_t value = readReg(16, 7);
   value = -74.1555 + 2 + value*4.053207*(pow(10,-5)); //Calibration function.
-  //if (value < 100 or value > 160){
-  //  value = 0;
-  //  }
+  if (value < 100 or value > 160){ //Out of realistic range (E.g. if no voltage is coming out of the soccet)
+    value = 0;
+    }
   delay(1000);
   return value;
  }
@@ -76,11 +88,11 @@ int readRmsV(){
  int readRmsI(){
   uint32_t value = readReg(16, 6);
   value = 0.00000101078*1000*value + 0.00037*1000; //Calibrationfunc. Note the value is returned in no milliAmps!
-  /*
-  if (value < 75){ // if < 10-11. there's no way you can get under 100 milliAmps.
+  
+  if (value < 11){ // zero values below 11 milliamps 
    value = 0;
     }
-    */ 
+  
   delay(1000);
   return value;
  }
