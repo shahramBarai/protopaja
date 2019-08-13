@@ -41,6 +41,10 @@ void setup(){
   // set the data rate for the HardwareSerial 2 port
   Serial2.begin(600);
 
+  pinMode(REELAY_OFF, OUTPUT);
+  pinMode(REELAY_ON, OUTPUT);
+  pinMode(REELAY_LED, OUTPUT);
+
   //Restarting chip
   pinMode(RST_SC5490, OUTPUT);
   delay(2000);
@@ -186,7 +190,28 @@ void readPushValues(){
   Serial.println(valPF, DEC);
 } 
 
+void RelaySwitch(int pinVal){ 
+  if (pinVal == 1){
+    digitalWrite(REELAY_ON, HIGH);
+    delay(1000); //later adjust to the minimum needed
+    digitalWrite(REELAY_ON, LOW);
+    digitalWrite(REELAY_LED, HIGH);
+  }else{
+    digitalWrite(REELAY_OFF, HIGH);
+    delay(1000); //later adjust to the minimum needed
+    digitalWrite(REELAY_OFF, LOW);
+    digitalWrite(REELAY_LED, LOW);
+  }
+}
+
 //**********-BLYNK FUNCTIONS->************
+BLYNK_WRITE(V0)
+{
+  int pinVal = param.asInt();
+  RelaySwitch(pinVal);
+}
+
+
 void pushValueV(int val){
   if (val > 260 || val < 130){
   val = 0;
