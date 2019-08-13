@@ -77,6 +77,7 @@ void loop(){
     readPushValues();
     readPushesQuant--;
     }
+  RelaySwitch(digitalRead(BUTTON));
 }
 
 int readRmsV(){
@@ -204,13 +205,13 @@ void RelaySwitch(int pinVal){
   }
 }
 
+
 //**********-BLYNK FUNCTIONS->************
 BLYNK_WRITE(V0)
 {
   int pinVal = param.asInt();
   RelaySwitch(pinVal);
 }
-
 
 void pushValueV(int val){
   if (val > 260 || val < 130){
