@@ -31,6 +31,12 @@ int readPushDur = 3*60*60*1000; // 3 min
 const int readPushesQuantSet = 10;
 int readPushesQuant = 10;
 
+bool reelayOnOff = false;
+
+bool buttonStateOld = false;
+bool buttonSwitched = false;
+bool BlynkButtonSwitched = false;
+
 void setup(){
   // Open serial communications and wait for port to open:
   Serial.begin(115200);
@@ -69,6 +75,7 @@ void loop(){
   //**********-FOR BLYNK-********************
   Blynk.run();
   //**********-FOR BLYNK END-****************
+
   if((millis() > time_now + readPushDuration) || (0 > readPushesQuant)){ //every rad & push duration push the quantity of readPushesQuant
     if (millis() > time_now + readPushDuration){
       readPushesQuant = readPushesQuantSet;
@@ -76,8 +83,10 @@ void loop(){
     time_now = millis();
     readPushValues();
     readPushesQuant--;
-    }
-  RelaySwitch(digitalRead(BUTTON));
+  }
+
+  isButtonPressed();
+  relaySwitch(buttonSwitched || BlynkButtonSwitched);
 }
 
 int readRmsV(){
@@ -124,7 +133,6 @@ int readRmsV(){
   return val;
  }
  
-
  float calcP(int V, int I, float PF){
   Serial.println("argumentae");
   Serial.println(V);
@@ -191,8 +199,8 @@ void readPushValues(){
   Serial.println(valPF, DEC);
 } 
 
-void RelaySwitch(int pinVal){ 
-  if (pinVal == 1){
+void relaySwitch(bool pinVal){ 
+  if (pinVal){
     digitalWrite(REELAY_ON, HIGH);
     delay(1000); //later adjust to the minimum needed
     digitalWrite(REELAY_ON, LOW);
@@ -205,12 +213,21 @@ void RelaySwitch(int pinVal){
   }
 }
 
+void isButtonPressed(){
+  bool buttonState = (bool)(digitalRead(BUTTON));
+  if (buttonState != buttonStateOld){
+    buttonStateOld = buttonState;
+    buttonSwitched = true;
+  }
+}
 
 //**********-BLYNK FUNCTIONS->************
 BLYNK_WRITE(V0)
 {
-  int pinVal = param.asInt();
-  RelaySwitch(pinVal);
+  bool BlynkButtonState = (bool)(param.asInt());
+  if (BlynkButtonState != BlynkButtonStateOld){
+    BlynkButtonStateOld = BlynkButtonState;
+    BlynkButtonSwitched = true;
 }
 
 void pushValueV(int val){
