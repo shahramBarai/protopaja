@@ -28,7 +28,7 @@ char pass[] = "";
 //**********-FOR BLYNK END-****************
 
 unsigned long time_now = 0;
-int readPushDuration = 3*60*60*1000; // 3 min
+int readPushDuration = 10000; // 3 min
 const int readPushesQuantSet = 10;
 int readPushesQuant = 10;
 
@@ -74,15 +74,17 @@ void setup(){
 }
 
 void loop(){
+  Serial.println("LOOP");
   //**********-FOR BLYNK-********************
   Blynk.run();
   //**********-FOR BLYNK END-****************
 
-  if((millis() > time_now + readPushDuration) || (0 > readPushesQuant)){ //every rad & push duration push the quantity of readPushesQuant
+  if((millis() > time_now + readPushDuration) || (0 < readPushesQuant)){ //every rad & push duration push the quantity of readPushesQuant
     if (millis() > time_now + readPushDuration){
       readPushesQuant = readPushesQuantSet;
     }
     time_now = millis();
+    Serial.println("pushing vals.....");
     readPushValues();
     readPushesQuant--;
   }
