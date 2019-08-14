@@ -15,6 +15,7 @@
 
 #define RST_SC5490 27
 
+void readPushValues();
 
 //**********-FOR BLYNK-********************
 #define BLYNK_PRINT Serial
@@ -27,7 +28,7 @@ char pass[] = "";
 //**********-FOR BLYNK END-****************
 
 unsigned long time_now = 0;
-int readPushDur = 3*60*60*1000; // 3 min
+int readPushDuration = 3*60*60*1000; // 3 min
 const int readPushesQuantSet = 10;
 int readPushesQuant = 10;
 
@@ -36,6 +37,7 @@ bool reelayOnOff = false;
 bool buttonStateOld = false;
 bool buttonSwitched = false;
 bool BlynkButtonSwitched = false;
+bool BlynkButtonStateOld = false;
 
 void setup(){
   // Open serial communications and wait for port to open:
@@ -173,6 +175,52 @@ void clearSerial2Buffer(){ //Clears Serial2 buffer every time before writing to 
   }
 }
 
+void relaySwitch(bool pinVal){ 
+  if (pinVal){
+    digitalWrite(REELAY_ON, HIGH);
+    delay(1000); //later adjust to the minimum needed
+    digitalWrite(REELAY_ON, LOW);
+    digitalWrite(REELAY_LED, HIGH);
+  }else{
+    digitalWrite(REELAY_OFF, HIGH);
+    delay(1000); //later adjust to the minimum needed
+    digitalWrite(REELAY_OFF, LOW);
+    digitalWrite(REELAY_LED, LOW);
+  }
+}
+
+void isButtonPressed(){
+  bool buttonState = (bool)(digitalRead(BUTTON));
+  if (buttonState != buttonStateOld){
+    buttonStateOld = buttonState;
+    buttonSwitched = true;
+  }
+}
+
+//**********-BLYNK FUNCTIONS->************
+BLYNK_WRITE(V0){
+  bool BlynkButtonState = (bool)(param.asInt());
+  if (BlynkButtonState != BlynkButtonStateOld){
+    BlynkButtonStateOld = BlynkButtonState;
+    BlynkButtonSwitched = true;
+  }
+}
+
+void pushValueV(int val){
+  if (val > 260 || val < 130){
+  val = 0;
+  }
+  Blynk.virtualWrite(V5, val); //Vrites in "V5" Cloud's VirtualPin Register 
+}
+
+void pushValueI(int val){
+  Blynk.virtualWrite(V4, val); 
+}
+
+void pushValueP(float val){
+  Blynk.virtualWrite(V3, val);
+}
+
 void readPushValues(){
   int valV = readRmsV();
   
@@ -197,50 +245,4 @@ void readPushValues(){
   Serial.println("Power P = VIcos(u):");
   Serial.println(valP, DEC);
   Serial.println(valPF, DEC);
-} 
-
-void relaySwitch(bool pinVal){ 
-  if (pinVal){
-    digitalWrite(REELAY_ON, HIGH);
-    delay(1000); //later adjust to the minimum needed
-    digitalWrite(REELAY_ON, LOW);
-    digitalWrite(REELAY_LED, HIGH);
-  }else{
-    digitalWrite(REELAY_OFF, HIGH);
-    delay(1000); //later adjust to the minimum needed
-    digitalWrite(REELAY_OFF, LOW);
-    digitalWrite(REELAY_LED, LOW);
-  }
-}
-
-void isButtonPressed(){
-  bool buttonState = (bool)(digitalRead(BUTTON));
-  if (buttonState != buttonStateOld){
-    buttonStateOld = buttonState;
-    buttonSwitched = true;
-  }
-}
-
-//**********-BLYNK FUNCTIONS->************
-BLYNK_WRITE(V0)
-{
-  bool BlynkButtonState = (bool)(param.asInt());
-  if (BlynkButtonState != BlynkButtonStateOld){
-    BlynkButtonStateOld = BlynkButtonState;
-    BlynkButtonSwitched = true;
-}
-
-void pushValueV(int val){
-  if (val > 260 || val < 130){
-  val = 0;
-  }
-  Blynk.virtualWrite(V5, val); //Vrites in "V5" Cloud's VirtualPin Register 
-}
-
-void pushValueI(int val){
-  Blynk.virtualWrite(V4, val); 
-}
-
-void pushValueP(float val){
-  Blynk.virtualWrite(V3, val);
 }
