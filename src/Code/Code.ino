@@ -38,6 +38,7 @@ bool buttonStateOld = false;
 bool buttonSwitched = false;
 bool BlynkButtonSwitched = false;
 bool BlynkButtonStateOld = false;
+bool RelayState = false;
 
 void setup(){
   // Open serial communications and wait for port to open:
@@ -90,7 +91,7 @@ void loop(){
   }
 
   isButtonPressed();
-  relaySwitch(buttonSwitched || BlynkButtonSwitched);
+  buttonSwitched = relaySwitch(buttonSwitched);
 }
 
 int readRmsV(){
@@ -177,8 +178,9 @@ void clearSerial2Buffer(){ //Clears Serial2 buffer every time before writing to 
   }
 }
 
-void relaySwitch(bool pinVal){ 
-  if (pinVal){
+bool relaySwitch(bool switched){ 
+  RelayState = !(RelayState);
+  if (RelayState){
     digitalWrite(REELAY_ON, HIGH);
     delay(1000); //later adjust to the minimum needed
     digitalWrite(REELAY_ON, LOW);
@@ -188,6 +190,8 @@ void relaySwitch(bool pinVal){
     delay(1000); //later adjust to the minimum needed
     digitalWrite(REELAY_OFF, LOW);
     digitalWrite(REELAY_LED, LOW);
+    switched = !(switched);
+    return switched;
   }
 }
 
@@ -200,11 +204,11 @@ void isButtonPressed(){
 }
 
 //**********-BLYNK FUNCTIONS->************
-BLYNK_WRITE(V0){
+BLYNK_WRITE(V0){ //may be needed to adjust "blunkbutttonstateold" to the state whichi is recieved during the first loop.
   bool BlynkButtonState = (bool)(param.asInt());
   if (BlynkButtonState != BlynkButtonStateOld){
     BlynkButtonStateOld = BlynkButtonState;
-    BlynkButtonSwitched = true;
+    buttonSwitched = true;
   }
 }
 
