@@ -2,7 +2,6 @@
   THIS CODE DOES NOT USE CS5490 LIBRARY, INSTEAD IT USES HardwareSerial 2 library,
   it means that it will be useful only for ESP32 AND SIMILAR BOARDS.
 */
-
 #define REELAY_OFF 14
 #define REELAY_ON 12
 #define REELAY_LED 32
@@ -178,20 +177,24 @@ void clearSerial2Buffer(){ //Clears Serial2 buffer every time before writing to 
   }
 }
 
-bool relaySwitch(bool switched){ 
-  RelayState = !(RelayState);
-  if (RelayState){
-    digitalWrite(REELAY_ON, HIGH);
-    delay(1000); //later adjust to the minimum needed
-    digitalWrite(REELAY_ON, LOW);
-    digitalWrite(REELAY_LED, HIGH);
-  }else{
-    digitalWrite(REELAY_OFF, HIGH);
-    delay(1000); //later adjust to the minimum needed
-    digitalWrite(REELAY_OFF, LOW);
-    digitalWrite(REELAY_LED, LOW);
-    switched = !(switched);
-    return switched;
+bool relaySwitch(bool switched){
+  if(switched){ 
+    RelayState = !(RelayState);
+    if (RelayState){
+      Serial.println("RS TRUE");
+      digitalWrite(REELAY_ON, HIGH);
+      delay(1000); //later adjust to the minimum needed
+      digitalWrite(REELAY_ON, LOW);
+      switched = !(switched);
+      return switched;
+    }else{
+      Serial.println("RS FALSE");
+      digitalWrite(REELAY_OFF, HIGH);
+      delay(1000); //later adjust to the minimum needed
+      digitalWrite(REELAY_OFF, LOW);
+      switched = !(switched);
+      return switched;
+    }
   }
 }
 
