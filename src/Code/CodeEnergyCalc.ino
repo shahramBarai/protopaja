@@ -15,7 +15,7 @@
 #define RST_SC5490 27
 
 //was void
-int readPushValues();
+float readPushValues();
 
 //**********-FOR BLYNK-********************
 #define BLYNK_PRINT Serial
@@ -32,8 +32,8 @@ int readPushDuration = 10000; // 3 min
 const int readPushesQuantSet = 10;
 int readPushesQuant = 10;
 
-int energyCost = 0; //In cents
-int totalEnergyCost = 0; //In cents
+float energyCost = 0; //In euros
+float totalEnergyCost = 0; //In euros
 
 bool reelayOnOff = false;
 
@@ -89,16 +89,17 @@ void loop(){
     }
     time_now = millis();
     Serial.println("pushing vals.....");
-	
-	//Calculate next power interval
-	
-	totalEnergyCost += (readPushValues() * energyCost * (millis()-time_now));
-	
+  
+  //Calculate next power interval
+
+  //w*€/kwh*second
+  totalEnergyCost += ((float)readPushValues() * (float)energyCost/3600000.0 * (((float)millis()-(float)time_now)/1000.0) );
+  
     //readPushValues();
     readPushesQuant--;
   }
 
-  isButtonPressed();
+  //isButtonPressed();
   buttonSwitched = relaySwitch(buttonSwitched);
   
 }
@@ -106,10 +107,11 @@ void loop(){
 int readRmsV(){
   uint32_t value = readReg(16, 7);
   value = -74.1555 + 2 + value*4.053207*(pow(10,-5)); //Calibration function.
-  if (value < 100 or value > 160){ //Out of realistic range (E.g. if no voltage is coming out of the soccet)
-    value = 0;
-    }
+  //if (value < 100 or value > 160){ //Out of realistic range (E.g. if no voltage is coming out of the soccet)
+  //  value = 0;
+  //  }
   delay(1000);
+  Serial.println(value);
   return value;
  }
 
@@ -195,6 +197,10 @@ bool relaySwitch(bool switched){
       digitalWrite(REELAY_ON, HIGH);
       delay(1000); //later adjust to the minimum needed
       digitalWrite(REELAY_ON, LOW);
+      digitalWrite(REELAY_LED, HIGH); //DOESNT WORK!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      
+      Blynk.virtualWrite(V2, HIGH); //Blynk interaction!!!!
+      
       switched = !(switched);
       return switched;
     }else{
@@ -202,6 +208,10 @@ bool relaySwitch(bool switched){
       digitalWrite(REELAY_OFF, HIGH);
       delay(1000); //later adjust to the minimum needed
       digitalWrite(REELAY_OFF, LOW);
+      digitalWrite(REELAY_LED, LOW); //THIS EITHER!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+      Blynk.virtualWrite(V2, LOW); //Blynk interaction!!!!
+      
       switched = !(switched);
       return switched;
     }
@@ -219,14 +229,24 @@ void isButtonPressed(){
 //**********-BLYNK FUNCTIONS->************
 //V1 => Energy cost from Blynk
 //V6 => Total Energy spent from Blynk
-BLYNK_WRITE(V1){
-	energyCost = (int)(param.asInt());
-}
+//V5 => Voltage
+//V4 => Current 
+//V3 => Power
+//V2
 
 void pushValueC(int val){
-	Blynk.virtualWrite(V6, val);
+  Blynk.virtualWrite(V6, val);
 }
 
+BLYNK_WRITE(V1){
+  energyCost = (float)(param.asFloat());
+}
+
+BLYNK_WRITE(V2){//********************************************************DEBUGGINGSCREEN LED
+  int vall = param.asInt();
+  Serial.println("LEDVAL!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+  Serial.println(vall);
+}
 
 BLYNK_WRITE(V0){ //may be needed to adjust "blunkbutttonstateold" to the state whichi is recieved during the first loop.
   bool BlynkButtonState = (bool)(param.asInt());
@@ -237,9 +257,9 @@ BLYNK_WRITE(V0){ //may be needed to adjust "blunkbutttonstateold" to the state w
 }
 
 void pushValueV(int val){
-  if (val > 260 || val < 130){
-  val = 0;
-  }
+ // if (val > 260 || val < 130){
+ // val = 0;
+ // }
   Blynk.virtualWrite(V5, val); //Vrites in "V5" Cloud's VirtualPin Register 
 }
 
@@ -251,7 +271,7 @@ void pushValueP(float val){
   Blynk.virtualWrite(V3, val);
 }
 
-void readPushValues(){
+float readPushValues(){
   int valV = readRmsV();
   
   int valI = readRmsI();
@@ -271,6 +291,12 @@ void readPushValues(){
   Serial.println(valV, DEC);
   Serial.println("Rms Current:");
   Serial.println(valI, DEC);
+  //New println
+  Serial.println("Energy Cost:");
+  Serial.println(energyCost, DEC);
+  Serial.println("Energy Cost Total:");
+  Serial.println(totalEnergyCost, DEC);
+  //New println end
   Serial.println("PF:");
   
   Serial.println("Power P = VIcos(u):");
