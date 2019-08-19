@@ -14,7 +14,8 @@
 
 #define RST_SC5490 27
 
-void readPushValues();
+//was void
+int readPushValues();
 
 //**********-FOR BLYNK-********************
 #define BLYNK_PRINT Serial
