@@ -10,12 +10,9 @@
 #define RGB_G 25
 #define RGB_B 33
 
-#define BUTTON 4
+#define BUTTON 4 //for on-device -button implementations. Check isButtonPressed() -function, (used in loop)
 
 #define RST_SC5490 27
-
-//was void
-float readPushValues();
 
 //**********-FOR BLYNK-********************
 #define BLYNK_PRINT Serial
@@ -27,8 +24,10 @@ char ssid[] = "aalto open";
 char pass[] = "";
 //**********-FOR BLYNK END-****************
 
+float readPushValues();
+
 unsigned long time_now = 0;
-int readPushDuration = 10000; // 3 min
+int readPushDuration = 10000; // = 10 sec, time gap between reading values from an energy meter chip.
 const int readPushesQuantSet = 10;
 int readPushesQuant = 10;
 
@@ -44,11 +43,13 @@ bool BlynkButtonStateOld = false;
 bool RelayState = false;
 
 void setup(){
+  //Achtung!**********************************************************************************************************************
+  //RECHECK IF THEESE LINES ARE NEEDED*************************->
   // Open serial communications and wait for port to open:
   Serial.begin(115200);
-
-  // wait for serial port to connect. Needed for Leonardo only
+  // wait for serial port to connect.
   while (!Serial);
+  //<-****************************************************************************************************************************
 
   // set the data rate for the HardwareSerial 2 port
   Serial2.begin(600);
@@ -64,7 +65,7 @@ void setup(){
   delay(2000);
   digitalWrite(RST_SC5490, HIGH);
 
-  //"wakeuping" the chip
+  //waking up the chip
   delay(2000);
   Serial2.write(0b11000011);
 
@@ -78,7 +79,6 @@ void setup(){
 }
 
 void loop(){
-  Serial.println("LOOP");
   //**********-FOR BLYNK-********************
   Blynk.run();
   //**********-FOR BLYNK END-****************
@@ -88,20 +88,15 @@ void loop(){
       readPushesQuant = readPushesQuantSet;
     }
     time_now = millis();
-    Serial.println("pushing vals.....");
   
   //Calculate next power interval
-
   //w*€/kwh*second
   totalEnergyCost += ((float)readPushValues() * (float)energyCost/3600000.0 * (((float)millis()-(float)time_now)/1000.0) );
-  
-    //readPushValues();
-    readPushesQuant--;
+  readPushesQuant--;
   }
 
-  //isButtonPressed();
+  //isButtonPressed(); //Uncomment, if you plan to use on-device button.
   buttonSwitched = relaySwitch(buttonSwitched);
-  
 }
 
 int readRmsV(){
@@ -110,57 +105,51 @@ int readRmsV(){
  
   if (value < 100 or value > 260){ //Out of realistic range (E.g. the case if no voltage is coming out of the soccet)
     value = 0;
-    }
+  }
     
   delay(1000);
-  
+
   return value;
  }
 
  int readRmsI(){
   uint32_t value = readReg(16, 6);
-  value = 0.00000101078*1000*value + 0.00037*1000; //Calibrationfunc. Note the value is returned in no milliAmps!
+  value = 0.00000101078*1000*value + 0.00037*1000; //Calibrationfunc. Note the value is returned in milliAmps!
   
-  if (value < 40){ // zero values below 40 milliamps 
+  if (value < 40){ //zero all values below 40 milliamps (out of range)
    value = 0;
-    }
+  }
     
   delay(1000);
+
   return value;
  }
 
  float readPF(){
   uint32_t value = readReg(16, 21);
-  Serial.println("raw");
-  Serial.println(value);
-  //float val = 0.5221002 - 7.52903E-8 * value + 1.16647E-14*(pow(value,(2)));  OLD
-  // New func: y = 0.5228584 - 7.845135e-8*x + 1.291986e-14*x^2
+
   float val = 0.5228584 - 7.845135E-8 * value + 1.291986E-14*(pow(value,(2)));
-  //The function is decent but still because of lack of data at value range 4*10^6 -> 0.98*10^7 it gets unsure values. Also note that under EU legislation no electrical devices can have a powerFactor under 0,95, therefore this calibration function should be accurate in normal device use.
-  if (val > 1){
+  //The function is decent but still because of lack of data at value range 4*10^6 -> 0.98*10^7 it gets unsure values. Also note that under EU legislation no electrical devices can have a powerFactor under 0,95, therefore this calibration function should be very accurate in normal device usage.
+  
+  if (val > 1){ //No power factor can be greater than 1.
     val = 1;
   }
     
-  if (val < 0.4){
-   Serial.print("PF VAL UNDER 0,4 ?!!!");
+  if (val < 0.4){ //Unrealistic PF.
    val = 0.4;
   }
-  Serial.println("Not raw");
-  Serial.println(val);
+
   delay(1000);
+
   return val;
  }
  
  float calcP(int V, int I, float PF){
-  Serial.println("argumentae");
-  Serial.println(V);
-  Serial.println(I);
-  Serial.println(PF);
   float P = V * I/(1000) * PF; //Where PF is cos(phase-displacement)
   return P;
  }
 
-//********-instrument functions-**********
+//********-instrumentary functions-**********
 uint32_t readReg(int page, int adr){
   byte data[3]; //data buffer
 
@@ -169,15 +158,15 @@ uint32_t readReg(int page, int adr){
   Serial2.write(0b10000000 + page); //0b10000000 is added because of that how adress writing logic works. Read more in datasheet.
   Serial2.write(adr);
 
-  //Wait for 3 bytes to arrive 
+  //wait for 3 bytes to come 
   while(Serial2.available() < 3);
 
-  //Read 3 byte information
+  //read 3 byte info
   for(int i=0; i<3; i++){
     data[i] = Serial2.read();
   }
 
-  //Data concatenation
+  //combining data
   uint32_t value = 0;
   value = value + data[2] << 8;
   value = value + data[1] << 8;
@@ -194,27 +183,30 @@ void clearSerial2Buffer(){ //Clears Serial2 buffer every time before writing to 
 bool relaySwitch(bool switched){
   if(switched){ 
     RelayState = !(RelayState);
-    if (RelayState){
-      Serial.println("RS TRUE");
-      digitalWrite(REELAY_ON, HIGH);
-      delay(1000); //later adjust to the minimum needed
-      digitalWrite(REELAY_ON, LOW);
-      digitalWrite(REELAY_LED, HIGH); //DOESNT WORK!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      
-      Blynk.virtualWrite(V2, HIGH); //Blynk interaction!!!!
-      
-      switched = !(switched);
-      return switched;
-    }else{
-      Serial.println("RS FALSE");
-      digitalWrite(REELAY_OFF, HIGH);
-      delay(1000); //later adjust to the minimum needed
-      digitalWrite(REELAY_OFF, LOW);
-      digitalWrite(REELAY_LED, LOW); //THIS EITHER!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-      Blynk.virtualWrite(V2, LOW); //Blynk interaction!!!!
-      
+    if (RelayState){
+      digitalWrite(REELAY_ON, HIGH);
+
+      delay(1000); 
+
+      digitalWrite(REELAY_ON, LOW);
+      digitalWrite(REELAY_LED, HIGH);
+
       switched = !(switched);
+
+      return switched;
+    }
+    
+    else{
+      digitalWrite(REELAY_OFF, HIGH);
+
+      delay(1000);
+
+      digitalWrite(REELAY_OFF, LOW);
+      digitalWrite(REELAY_LED, LOW);
+
+      switched = !(switched);
+
       return switched;
     }
   }
@@ -222,6 +214,7 @@ bool relaySwitch(bool switched){
 
 void isButtonPressed(){
   bool buttonState = (bool)(digitalRead(BUTTON));
+
   if (buttonState != buttonStateOld){
     buttonStateOld = buttonState;
     buttonSwitched = true;
@@ -229,12 +222,12 @@ void isButtonPressed(){
 }
 
 //**********-BLYNK FUNCTIONS->************
+//Blynk virtual pins usage:
 //V1 => Energy cost from Blynk
 //V6 => Total Energy spent from Blynk
 //V5 => Voltage
 //V4 => Current 
 //V3 => Power
-//V2
 
 void pushValueC(int val){
   Blynk.virtualWrite(V6, val);
@@ -244,14 +237,9 @@ BLYNK_WRITE(V1){
   energyCost = (float)(param.asFloat());
 }
 
-BLYNK_WRITE(V2){//********************************************************DEBUGGINGSCREEN LED
-  int vall = param.asInt();
-  Serial.println("LEDVAL!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-  Serial.println(vall);
-}
-
-BLYNK_WRITE(V0){ //may be needed to adjust "blunkbutttonstateold" to the state whichi is recieved during the first loop.
+BLYNK_WRITE(V0){ 
   bool BlynkButtonState = (bool)(param.asInt());
+
   if (BlynkButtonState != BlynkButtonStateOld){
     BlynkButtonStateOld = BlynkButtonState;
     buttonSwitched = true;
@@ -259,10 +247,7 @@ BLYNK_WRITE(V0){ //may be needed to adjust "blunkbutttonstateold" to the state w
 }
 
 void pushValueV(int val){
- // if (val > 260 || val < 130){
- // val = 0;
- // }
-  Blynk.virtualWrite(V5, val); //Vrites in "V5" Cloud's VirtualPin Register 
+  Blynk.virtualWrite(V5, val); //Vrites in "V5", a cloud's VirtualPin Register 
 }
 
 void pushValueI(int val){
@@ -289,21 +274,5 @@ float readPushValues(){
   pushValueC(totalEnergyCost);
   //**********-FOR BLYNK END-****************
 
-  Serial.println("Rms Voltage:");
-  Serial.println(valV, DEC);
-  Serial.println("Rms Current:");
-  Serial.println(valI, DEC);
-  //New println
-  Serial.println("Energy Cost:");
-  Serial.println(energyCost, DEC);
-  Serial.println("Energy Cost Total:");
-  Serial.println(totalEnergyCost, DEC);
-  //New println end
-  Serial.println("PF:");
-  
-  Serial.println("Power P = VIcos(u):");
-  Serial.println(valP, DEC);
-  Serial.println(valPF, DEC);
-  
   return valP;
 }
