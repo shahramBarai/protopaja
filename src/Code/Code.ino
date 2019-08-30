@@ -1,9 +1,18 @@
-/*
-  THIS CODE DOES NOT USE CS5490 LIBRARY, INSTEAD IT USES HardwareSerial 2 library,
-  it means that it will be useful only for ESP32 AND SIMILAR BOARDS.
-*/
+/*********************************************************************************************************************************************
+  Aalto protopaja summer 2019 in collaboration with Riot innovations.
+  
+  Code runs with an esp-32 - wifi module using "Blynk" as an user interaction app, which uses its own cloud. 
+  (Note that all functions which use blynk are marked so that in future it would be easier to be able to possibly change to another framework.)
+  
+  Before installing code remember to switch devise to boot mode by pressing boot-button for 10 seconds while plugging the device into socket.
+  For operation remember to restart device by turning it off and on after loading new code.
+
+  Copyright (c) MITÄ TÄHÄN LAITETAAN?. All rights reserved. Licensed under the MIT License.
+**********************************************************************************************************************************************/
+
 #define REELAY_OFF 14
 #define REELAY_ON 12
+
 #define REELAY_LED 32
 
 #define RGB_R 26
@@ -12,7 +21,7 @@
 
 #define BUTTON 4 //for on-device -button implementations. Check isButtonPressed() -function, (used in loop)
 
-#define RST_SC5490 27
+#define RST_SC5490 27 
 
 //**********-FOR BLYNK-********************
 #define BLYNK_PRINT Serial
@@ -43,13 +52,9 @@ bool BlynkButtonStateOld = false;
 bool RelayState = false;
 
 void setup(){
-  //Achtung!**********************************************************************************************************************
-  //RECHECK IF THEESE LINES ARE NEEDED*************************->
-  // Open serial communications and wait for port to open:
-  Serial.begin(115200);
+  //Serial.begin(115200); //Uncomment theese for serialport communication with computers serial monitor.
   // wait for serial port to connect.
-  while (!Serial);
-  //<-****************************************************************************************************************************
+  //while (!Serial);
 
   // set the data rate for the HardwareSerial 2 port
   Serial2.begin(600);
@@ -129,7 +134,7 @@ int readRmsV(){
   uint32_t value = readReg(16, 21);
 
   float val = 0.5228584 - 7.845135E-8 * value + 1.291986E-14*(pow(value,(2)));
-  //The function is decent but still because of lack of data at value range 4*10^6 -> 0.98*10^7 it gets unsure values. Also note that under EU legislation no electrical devices can have a powerFactor under 0,95, therefore this calibration function should be very accurate in normal device usage.
+  //This function is decent but still because of lack of data at value range 4*10^6 -> 0.98*10^7 it gets unsure values. Also note that under EU legislation no electrical devices can have a powerFactor under 0,95, therefore this calibration function should be very accurate in normal device usage.
   
   if (val > 1){ //No power factor can be greater than 1.
     val = 1;
