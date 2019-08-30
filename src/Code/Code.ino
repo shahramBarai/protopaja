@@ -28,9 +28,9 @@
 #include <WiFi.h>
 #include <WiFiClient.h>
 #include <BlynkSimpleEsp32.h>
-char auth[] = "AfUHvsOdH6UFhEV0FtIM_0IKUawP5HRl";
-char ssid[] = "aalto open";
-char pass[] = "";
+char auth[] = "YOUR AUTH. TOKEN";
+char ssid[] = "YOUR WIFI";
+char pass[] = "YOUR PASSWORD";
 //**********-FOR BLYNK END-****************
 
 float readPushValues();
