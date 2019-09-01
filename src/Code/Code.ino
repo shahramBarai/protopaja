@@ -7,7 +7,7 @@
   Before installing code remember to switch devise to boot mode by pressing boot-button for 10 seconds while plugging the device into socket.
   For operation remember to restart device by turning it off and on after loading new code.
 
-  Copyright (c) MITÄ TÄHÄN LAITETAAN?. All rights reserved. Licensed under the MIT License.
+  Copyright (c) . All rights reserved. Licensed under the MIT License.
 **********************************************************************************************************************************************/
 
 #define REELAY_OFF 14
