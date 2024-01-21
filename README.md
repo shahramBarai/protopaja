@@ -1,31 +1,62 @@
-# Protopaja 2019 P6 (Riot Innovations)
+# Etäohjattava virranohjausmoduuli (Protopaja 2019)
 
-## Josdanto
+**Tämä projekti on osa Aalto-yliopiston [Protopaja](https://protopaja.aalto.fi/) kurssia (kesäkuusta elokuuhun 2019).*
 
-Yhtiö tarvitsee älykkään järjestelmän ohjaamaan eri sähkölaitteita. 
-Ideana on rakentaa laite, joka tulisi kiinni pistorasiasta lähtevään johtoon 
-tai mahdollisesti voitaisiin jo suunnitteluvaiheessa integroida sähkölaiteen 
-rungon sisälle. Laitteella pystyy käynnistämään ja sulkemaan siihen linkitetyt 
-sähkölaitteet. Tämän lisäksi laite mittaa sähkönkulutusta. Ohjaamiseen yhtiö 
-on ehdottanut Blynk nimistä ohjelmistoa, jolla etäohjaus tapahtuu wifi:n, 
-bluetoothin tai esim. suoraan USB:n kautta.
+## 1. Josdanto
+Yhtiö tarvitsee älykkään järjestelmän ohjaamaan eri sähkölaitteita. Ideana on rakentaa laite, joka
+tulisi kiinni pistorasiasta lähtevään johtoon tai mahdollisesti voitaisiin jo suunnitteluvaiheessa
+integroida sähkölaiteen rungon sisälle. Laitteella pystyy käynnistämään ja sulkemaan siihen
+linkitetyt sähkölaitteet. Tämän lisäksi laite mittaa sähkönkulutusta. Ohjaamiseen yhtiö on
+ehdottanut Blynk nimistä ohjelmistoa, jolla etäohjaus tapahtuu wifi:n, bluetoothin tai esim. suoraan
+USB:n kautta. 
 
-## Komponenttilista
+## 2. Tavoite
+Järjestelmän avulla pystyy tarkkailemaan siihen linkitetyn sähkölaitteen energiankulutusta, ja
+ohjaamaan laitteen käynnistämistä tai sulkemista etänä tämän datan pohjalta järjestelmään kuuluvan
+sovelluksen avulla.
+Järjestelmä on ensisijaisesti suunnattu kotitalouksille, ja näin ollen sen loppukäyttäjiä ovat
+kuluttajat. Demonstraatiossa otamme sovelluksesta WiFin kautta yhteyden pistorasiaan
+asennettavaan laitteeseen, ja käynnistämme ja sammutamme järjestelmän kautta lampun. 
 
-| Item | Part | Component | Qty | Cost/unit | Pricing (1000pcs) |
-| ------ | ------ | ------ | ------ | ------ | ------ |
-| 1 | MCU WLAN | ESP32-WROOM-32D | 1 | 3,42 | 3,42 |
-| 2 | Energy measuring circuit | CS-5490 | 1 | 3,35 | 1,67 |
-| 3 | Current Transformer | T60404-E4622-X501 | 1 | 10,93 | 5,01 |
-| 4 | Relay | ADW1203HLW | 1 | 5,24 | 3,07 |
-| 5 | AC/DC power | TMPS 05-103 | 1 | 16,38 | 12,94 |
-| 6 | Isolated Transformer | VB 0.35/1/6 | 1 | 5,98 | 4,33 |
-| 7 | Chrystal | ABLS2-4.096MHZ-D4Y-T | 1 | 0,50 | 0,19 |
-| 8 | LED Green | KPT-2012LCGCK | 1 | 0,0161 | 0,0565 |
-| 9 | LED Red | KPT-2012SRC-PRV | 1 | 0,0308 | 0,0612 |
-| 10 | Wire-To-Board Terminal Block| 	235-402/331-000 | 2 | 0,036 | 0,30 |
-| 11 | or | 250-502 | 2 | 0,037 | 0,332 |
-| Total |  |  |  | **45,82** | **31,23** |
+## 3. Tulokset 
+Lopputuloksena meillä on tomiva virranmittauspiiri, joka lähettää Blynk-sovellukselle
+reaaliaikaisesti dataa sähkönkulutuksesta. Lisäksi Blynk-sovelluksella voidaan laittaa sähkövirta
+laitteeseen päälle ja pois. 
 
-** Resistors, capacitors and leds are used 0805 case. You can find components here: 
-[KiCad/Components_list.png](https://version.aalto.fi/gitlab/barais1/protopaja/blob/master/KiCad/Components_list.png)
+![Lopullinen_ulkoa](./reports/images/IMG_Lopullinen_ulkoa.jpg)
+Kuva 1: Virranmittauspiiri ulkoa.
+
+![Lopullinen_sisalta](./reports/images/IMG_Lopullinen_sisalta.jpg)
+Kuva 2: Virranmittauspiiri sisältä. 
+
+
+### 3.1 Tekninen toiminta
+Moduulissa on energianmittauspiiri CS-5490, mikä mittaa virran ja jännitteen, ja lähettää siitä tiedon ESP32-mikrokontrollerille. Blynk-sovellus lähettää mikrokontrollerille tiedon sähkön hinnasta. ESP32 laskee energian kulutuksen, tehon ja sähkölaskun suuruuden ja välittää informaation Blynk-sovellukselle.
+
+Käyttäjä näkee Blynk-sovelluksesta kätevästi tilanteen. Lisäksi käyttäjä voi käskeä katkaisemaan sähkövirran sovelluksesta. Sovellus lähettää tällöin tiedon ESP32:lle, mikä katkaisee virran kulun piirin lävitse. Käyttäjä voi myös avata virran uudelleen sovelluksen kautta.
+
+Blynk ja ESP32 kommunkoivat WiFi:n välityksellä. Sähkövirtaa ohjataan releellä.
+
+
+### 3.2 Blynk-mobiilisovellusalusta
+Blynk on mobiilisovellusalusta joka auttaa kommunikoimaan IoT-laitteiden kanssa (Internet of Things, esineiden internet). Se on yhteensopiva hyvin moneen mikrokontrolleriin ja se tarjoaa kehittämistä varten kattavan kirjaston. Käytimme Blynkkiä virranohjausmoduulin ohjaussovelluksen tekemiseen.
+
+<img src="./reports/images/IMG_Blynk_Interface.png" width="300" height="600" />
+
+Kuva 3: Kuvakaapaus Blynk-mobiilisovelluksen käyttäjän rajapinnasta. Sovellus sekä näyttää energiankulutuksen, että siitä voi laittaa laitteen sähkövirran päälle tai pois.
+
+
+## 4. Piirin suunnittelu
+
+**Lisätietoja elektroniikkapiiristä löytyy täältä [KiCad/..](./KiCad/)**
+
+
+
+
+## 5. Ohjelmointi
+
+**Lisätietoja ESP32 lähtökoodistä löytyy täältä [src/..](./src/)**
+
+
+## Linsensi
+Tämä teos on lisensoitu Creative Commons Nimeä 4.0 Kansainvälinen -lisenssillä. Tarkastele lisenssiä osoitteessa http://creativecommons.org/licenses/by/4.0/ tai lähetä kirje osoitteeseen Creative Commons, PO Box 1866, Mountain View, CA 94042, USA.
