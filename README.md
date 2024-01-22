@@ -2,7 +2,7 @@
 
 **Tämä projekti on osa Aalto-yliopiston [Protopaja](https://protopaja.aalto.fi/) kurssia (kesäkuusta elokuuhun 2019).*
 
-## 1. Josdanto
+## 1. Johdanto
 Yhtiö tarvitsee älykkään järjestelmän ohjaamaan eri sähkölaitteita. Ideana on rakentaa laite, joka
 tulisi kiinni pistorasiasta lähtevään johtoon tai mahdollisesti voitaisiin jo suunnitteluvaiheessa
 integroida sähkölaiteen rungon sisälle. Laitteella pystyy käynnistämään ja sulkemaan siihen
@@ -51,11 +51,13 @@ Kuva 3: Kuvakaapaus Blynk-mobiilisovelluksen käyttäjän rajapinnasta. Sovellus
 **Lisätietoja elektroniikkapiiristä löytyy täältä [KiCad/..](./KiCad/)**
 
 
-
-
 ## 5. Ohjelmointi
 
 **Lisätietoja ESP32 lähtökoodistä löytyy täältä [src/..](./src/)**
+
+## 6. Fyysinen kotelo
+
+**Lisätietoa fyysisestä kotelosta löytyy täältä [Autodesk Fusion 360/..](./Autodesk%20Fusion%20360/)**
 
 
 ## Linsensi
